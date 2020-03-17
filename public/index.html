@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#e51c23" />
+
+    <title>YouTube Converter</title>
+
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" href="favicon.ico" />
+    <link rel="stylesheet" href="https://bootswatch.com/4/materia/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body class="bg-danger">
+    <div class="container">
+        <div class="row justify-content-center align-items-center">
+            <div class="col-md-6 text-center">
+                <h1 class="text-white"><b><i class="fa fa-youtube-play mr-2"></i>YouTube Downloader</b></h1>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="from-group">
+                            <form id="yt-form">
+                                <input type="url" id="yt-url" class="form-control" placeholder="YouTube or ID" />
+                                <input type="text" id="yt-filename" class="form-control" placeholder="Filename" />
+                                <input type="submit" value="Convert" class="btn btn-dark btn-block mt-4" />
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="loader" class="flex-column justify-content-center align-items-center d-none">
+        <i class="fa fa-spinner fa-spin fa-4x fa-fw text-white"></i>
+    </div>
+    <script src="main.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        };
+    </script>
+</body>
+</html>
