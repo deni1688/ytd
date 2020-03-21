@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -14,11 +15,17 @@ import (
 	"github.com/rylio/ytdl"
 )
 
+var (
+	baseURL = "https://www.googleapis.com/youtube/v3/search?&part=snippet&type=list&key=" + os.Getenv("API_KEY")
+	auth    = os.Getenv("AUTH_PASS")
+)
+
 func main() {
 	r := mux.NewRouter()
 
 	api := r.PathPrefix("/api/v1").Subrouter()
 	api.HandleFunc("/convert", convertRoute).Methods("GET")
+	api.HandleFunc("/search", searchRoute).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./public")))
 
@@ -34,8 +41,32 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
+func searchRoute(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("query")
+
+	resp, err := http.Get(baseURL + "&q=" + query)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Search failed"))
+		return
+	}
+
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(body)
+}
+
 func convertRoute(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
+	key := query.Get("key")
+
+	if key == "" || key != auth {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("This is a private project for testing purposes only. Go away!"))
+		return
+	}
 
 	mp3, err := createMP3(query.Get("url"))
 

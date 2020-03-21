@@ -22,13 +22,12 @@
                 <h1 class="text-white"><b><i class="fa fa-youtube-play mr-2"></i>YouTube Downloader</b></h1>
                 <div class="card">
                     <div class="card-body">
-                        <div class="from-group">
-                            <form id="yt-form">
-                                <input type="url" id="yt-url" class="form-control" placeholder="YouTube or ID" />
-                                <input type="text" id="yt-filename" class="form-control" placeholder="Filename" />
-                                <input type="submit" value="Convert" class="btn btn-dark btn-block mt-4" />
-                            </form>
-                        </div>
+                        <form id="yt-form">
+                            <div class="from-group">
+                                <input type="text" id="yt-search" class="form-control" placeholder="Search" />
+                            </div>
+                        </form>
+                        <div id="results"></div>
                     </div>
                 </div>
             </div>
