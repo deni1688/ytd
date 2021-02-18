@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -11,7 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/rylio/ytdl"
+	"github.com/kkdai/youtube/v2"
 )
 
 func main() {
@@ -46,11 +47,12 @@ func convertRoute(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeFile(w, r, mp3)
-	os.Remove(mp3)
+	handleErr(os.Remove(mp3))
 }
 
 func createMP3(url string) (string, error) {
-	vid, err := ytdl.GetVideoInfo(url)
+	client := youtube.Client{}
+	vid, err := client.GetVideo(url)
 	if err != nil {
 		fmt.Println("Failed to get video info", err.Error())
 		return "", errors.New("Failed to get video info")
@@ -58,12 +60,9 @@ func createMP3(url string) (string, error) {
 
 	from, to := getFromTo()
 
-	err = os.Remove(to)
-	if err == nil {
-		fmt.Println("Creating new file")
-	}
+	handleErr(os.Remove(to))
 
-	downloadFile(vid, from)
+	downloadFile(vid, from, &client)
 
 	err = ffmpegConvert(from, to)
 	if err != nil {
@@ -71,29 +70,33 @@ func createMP3(url string) (string, error) {
 		return to, err
 	}
 
-	os.Remove(from)
-
-	return to, nil
+	return to, os.Remove(from)
 }
 
 func ffmpegConvert(from, to string) error {
 	fmt.Println("Download complete")
 
-	cmd := exec.Command("ffmpeg", "-i", from, "-map", "0:a:0", "-b:a", "96k", to)
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("cmd.Run() failed with %s\n", err)
-		return err
-	}
+	err := exec.Command("ffmpeg", "-i", from, "-map", "0:a:0", "-b:a", "96k", to).Run()
+	handleErr(err)
+
 	fmt.Printf("New file %s created. Thank you come again!\n", to)
 
 	return nil
 }
 
-func downloadFile(vid *ytdl.VideoInfo, from string) {
-	file, _ := os.Create(from)
+func downloadFile(vid *youtube.Video, from string, c *youtube.Client) {
+	resp, err := c.GetStream(vid, &vid.Formats[0])
+	handleErr(err)
 
-	vid.Download(vid.Formats[0], file)
-	file.Close()
+	defer resp.Body.Close()
+
+	file, err := os.Create(from)
+	handleErr(err)
+
+	defer file.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	handleErr(err)
 }
 
 func getFromTo() (string, string) {
@@ -103,4 +106,10 @@ func getFromTo() (string, string) {
 	to := "./downloads/" + filename + ".mp3"
 
 	return from, to
+}
+
+func handleErr(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
